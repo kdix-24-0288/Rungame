@@ -61,6 +61,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets/Animations/PlayerController.cs" />
+    <Compile Include="Assets/Animations/Follower.cs" />
+    <Compile Include="Assets/Animations/CameraFollow.cs" />
+    <Compile Include="Assets/Animations/StageGenerator.cs" />
     <Compile Include="Assets/GameManager.cs" />
   </ItemGroup>
   <ItemGroup>

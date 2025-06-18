@@ -1,14 +1,19 @@
 ﻿<Properties StartupConfiguration="{95ACDEB0-3F3E-ADC0-C654-EE031B4AB388}|">
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/PlayerMove.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Animations/Follower.cs">
     <Files>
-      <File FileName="Assets/PlayerMove.cs" Line="14" Column="1" />
+      <File FileName="Assets/Animations/PlayerController.cs" Line="72" Column="9" />
+      <File FileName="Assets/Animations/CameraFollow.cs" Line="28" Column="2" />
+      <File FileName="Assets/Animations/StageGenerator.cs" Line="75" Column="2" />
+      <File FileName="Assets/Animations/Follower.cs" Line="16" Column="2" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State name="__root__">
           <Node name="RunGame" expanded="True">
             <Node name="Assets" expanded="True">
-              <Node name="PlayerMove.cs" selected="True" />
+              <Node name="Animations" expanded="True">
+                <Node name="Follower.cs" selected="True" />
+              </Node>
             </Node>
           </Node>
         </State>
@@ -17,7 +22,7 @@
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.ItemProperties.Assembly-CSharp PreferredExecutionTarget="d28a08fd-03ea-412e-b4da-e27ae708727a" />
+  <MonoDevelop.Ide.ItemProperties.Assembly-CSharp PreferredExecutionTarget="2e38b3ae-8283-454d-a826-baf1ddc41c46" />
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>

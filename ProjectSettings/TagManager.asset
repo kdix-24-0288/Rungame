@@ -7,14 +7,15 @@ TagManager:
   - Ground
   - DeadZone
   - Enemy
+  - Wall
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Wall
   - Water
   - UI
-  - 
+  - Ground
   - 
   - 
   - 
