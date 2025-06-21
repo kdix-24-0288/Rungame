@@ -25,6 +25,7 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        FindObjectOfType<GameManager>().UpdateHealthUI(health);
     }
 
     void FixedUpdate()
@@ -69,7 +70,7 @@ public class PlayerController : MonoBehaviour
 
 
         // --- デバッグ用のログ（必要に応じてコメントアウトを外す） ---
-         Debug.Log("接地状態: " + isGrounded + " | ジャンプ回数: " + currentJumpCount);
+        // Debug.Log("接地状態: " + isGrounded + " | ジャンプ回数: " + currentJumpCount);
     }
 
 
@@ -86,6 +87,8 @@ public class PlayerController : MonoBehaviour
         {
             // ダメージ処理
             health--;
+            FindObjectOfType<GameManager>().UpdateHealthUI(health);
+
             Debug.Log("敵に当たった！ 残りライフ: " + health);
             if (health <= 0)
             {
