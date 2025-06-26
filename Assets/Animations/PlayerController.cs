@@ -11,10 +11,22 @@ public class PlayerController : MonoBehaviour
     public int maxJumpCount = 2; // 最大ジャンプ回数（2にすれば二段ジャンプ）
     private int currentJumpCount = 0; // 現在のジャンプ回数を記録する
 
+    [Header("可変ジャンプ設定")]
+    public float sustainedJumpForce = 25f;  // ジャンプボタンを押し続けている間に加わる力
+    public float maxJumpTime = 0.2f;       // ジャンプを続けられる最大時間（秒）
+    private float currentJumpTime;         // 現在のジャンプ時間を記録するタイマー
+    private bool isJumping;
+
     [Header("接地判定（Raycast用）")]
     public LayerMask groundLayer;           // Inspectorで設定する地面のレイヤー
     public Transform groundCheckPoint;      // Inspectorで設定する地面判定の開始位置
     public float groundCheckDistance = 0.55f; // Inspectorで調整する地面判定の距離
+
+    [Header("壁判定")]
+    public LayerMask wallLayer;             // 壁として認識するレイヤー
+    public Transform wallCheckPoint;        // 壁を検知する線の開始位置
+    public float wallCheckDistance = 0.5f;  // 壁を検知する線の長さ
+    private bool isTouchingWall;            // 壁に触れているかどうかの状態
 
     private Rigidbody2D rb;
     private Animator animator;
@@ -30,47 +42,86 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // 常に右方向に一定の速度で移動
-        rb.velocity = new Vector2(moveSpeed, rb.velocity.y);
+        if (rb.velocity.x < moveSpeed)
+        {
+            // 前に進むための力を加える
+            // ForceMode2D.Forceは、質量を考慮した継続的な力です。
+            // moveSpeedに10を掛けるなどして、力の大きさを調整してください。
+            rb.AddForce(Vector2.right * moveSpeed * 10f);
+        }
+
+        // もし何かの拍子で速度が速くなりすぎた場合、最高速度に制限する（安全装置）
+        if (rb.velocity.x > moveSpeed)
+        {
+            rb.velocity = new Vector2(moveSpeed, rb.velocity.y);
+        }
+
+        // ★★★ ここから追加 ★★★
+        // --- ジャンプボタンを押し続けている間の、継続的な上昇処理 ---
+        if (isJumping)
+        {
+            // ジャンプ時間が上限に達していなければ
+            if (currentJumpTime < maxJumpTime)
+            {
+                // 上昇し続ける力を加える
+                rb.AddForce(Vector2.up * sustainedJumpForce);
+                // 時間を加算
+                currentJumpTime += Time.fixedDeltaTime;
+            }
+            else
+            {
+                // 上限に達したら、強制的にジャンプを終了
+                isJumping = false;
+            }
+        }
     }
 
     void Update()
     {
         // --- 接地判定 ---
-        // isGroundedの判定は、アニメーターとジャンプ回数のリセットのために使用
         isGrounded = Physics2D.Raycast(groundCheckPoint.position, Vector2.down, groundCheckDistance, groundLayer);
 
+        // --- 壁判定のRaycast ---
+        isTouchingWall = Physics2D.Raycast(wallCheckPoint.position, Vector2.right, wallCheckDistance, wallLayer);
 
-        // --- ジャンプ回数をリセットする処理 ---
-        // もし地面にいて、かつ、ジャンプ回数が0より大きい場合（ジャンプ後に着地した瞬間）
-        if (isGrounded && currentJumpCount > 0)
+        // --- 角でハマった時の脱出処理 ---
+        // 条件：壁に触れていて、かつ、地面にいて、かつ、水平方向の速度がほぼゼロ（＝ハマっている）
+        if (isTouchingWall && isGrounded && Mathf.Abs(rb.velocity.x) < 0.05f)
+        {
+            // 小さく上に押し出して、角を乗り越えさせる
+            // ここの力の値(3f)は、キャラクターに合わせて微調整してください
+            rb.AddForce(Vector2.up * 3f, ForceMode2D.Impulse);
+        }
+
+        // --- 着地時のリセット処理 ---
+        if (isGrounded && rb.velocity.y <= 0)
         {
             currentJumpCount = 0;
+            isJumping = false; // ジャンプ状態もリセット
+            rb.velocity = new Vector2(rb.velocity.x, 0);
         }
 
-
-        // --- ジャンプ処理 ---
-        // もしジャンプキーが押されて、かつ、現在のジャンプ回数が最大回数未満なら
+        // --- ジャンプ開始の処理 (GetKeyDown) ---
         if (Input.GetKeyDown(KeyCode.Space) && currentJumpCount < maxJumpCount)
         {
-            // 2回目のジャンプの高さを安定させるため、一度Y軸の速度をリセットする
+            // Y軸の速度をリセットして、毎回同じ高さでジャンプできるようにする
             rb.velocity = new Vector2(rb.velocity.x, 0);
+            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse); // 最初のひと蹴り
 
-            // 上方向に力を加える
-            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-
-            // ジャンプ回数を1増やす
-            currentJumpCount++;
+            currentJumpCount++; // ジャンプ回数をカウント
+            isJumping = true;     // ジャンプボタンが押されている状態にする
+            currentJumpTime = 0f; // ジャンプ時間タイマーをリセット
         }
 
+        // --- ジャンプ上昇を止める処理 (GetKeyUp) ---
+        if (Input.GetKeyUp(KeyCode.Space))
+        {
+            isJumping = false;
+        }
 
-        // --- Animatorのパラメータを更新 ---
+        // --- Animatorの更新 ---
         animator.SetBool("isGrounded", isGrounded);
         animator.SetFloat("velocityY", rb.velocity.y);
-
-
-        // --- デバッグ用のログ（必要に応じてコメントアウトを外す） ---
-        // Debug.Log("接地状態: " + isGrounded + " | ジャンプ回数: " + currentJumpCount);
     }
 
 
