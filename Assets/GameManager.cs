@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement; // シーンの再読み込みに必要
 using UnityEngine.UI; // UIを扱うために必要
 using System.Collections.Generic; // Listを扱うために必要
+using TMPro;
 
 
 public class GameManager: MonoBehaviour
@@ -12,11 +13,44 @@ public class GameManager: MonoBehaviour
     public Sprite fullHeartSprite;  // 満タンのハートの画像
     public Sprite emptyHeartSprite; // 空のハートの画像
 
+    [Header("スコア関連")]
+    public TextMeshProUGUI scoreText; // Inspectorで設定するスコア表示用テキスト
+    public Transform player;          // Inspectorで設定するプレイヤー
+
+    private float startPositionX;
+    private int score;
+    private bool isGameOver = false; // ゲームオーバー状態を管理するフラグ
+
+    void Start()
+    {
+        gameOverUI.SetActive(false); // ゲーム開始時は非表示
+        isGameOver = false;          // ゲームオーバーフラグをリセット
+        Time.timeScale = 1f;         // 時間の停止を解除
+
+        // プレイヤーの開始位置を記録
+        startPositionX = player.position.x;
+        // スコア表示を初期化
+        scoreText.text = "Score: 0";
+    }
+    void Update()
+    {
+        // ゲームオーバーになっていなければ、スコアを更新し続ける
+        if (!isGameOver)
+        {
+            // 開始位置からの移動距離を計算
+            float distance = player.position.x - startPositionX;
+            // スコアを整数にする（10倍すると数字が大きくなって気持ちいい）
+            score = Mathf.Max(0, (int)(distance * 10f));
+            // UIテキストを更新
+            scoreText.text = "Score: " + score;
+        }
+    }
     // ゲームオーバー画面を表示するためのメソッド
     public void ShowGameOverUI()
     {
         // 非表示にしていたUIパネルを表示する
         gameOverUI.SetActive(true);
+        isGameOver = true;
     }
 
     // リトライボタンから呼び出すためのメソッド
