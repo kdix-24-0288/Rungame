@@ -146,14 +146,23 @@ public class PlayerController : MonoBehaviour
                 GameOver();
             }
         }
+
+        if (other.CompareTag("Coin"))
+        {
+            // GameManagerにスコアを増やすようにお願いする
+            FindObjectOfType<GameManager>().AddScore(100); // 1枚あたり100点加算
+
+            // 触れたコインを消す
+            Destroy(other.gameObject);
+        }
     }
 
-    // --- ゲームオーバー処理 ---
-    public void GameOver()
-    {
-        Debug.Log("GAME OVER");
-        Time.timeScale = 0f;
-        this.enabled = false;
-        FindObjectOfType<GameManager>().ShowGameOverUI();
+        // --- ゲームオーバー処理 ---
+        public void GameOver()
+        {
+            Debug.Log("GAME OVER");
+            Time.timeScale = 0f;
+            this.enabled = false;
+            FindObjectOfType<GameManager>().ShowGameOverUI();
+        }
     }
-}

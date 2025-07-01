@@ -40,9 +40,8 @@ public class GameManager: MonoBehaviour
             // 開始位置からの移動距離を計算
             float distance = player.position.x - startPositionX;
             // スコアを整数にする（10倍すると数字が大きくなって気持ちいい）
-            score = Mathf.Max(0, (int)(distance * 10f));
-            // UIテキストを更新
-            scoreText.text = "Score: " + score;
+            int distanceScore = Mathf.Max(0, (int)(distance * 1f));
+            scoreText.text = "Score: " + (score + distanceScore);
         }
     }
     // ゲームオーバー画面を表示するためのメソッド
@@ -78,5 +77,14 @@ public class GameManager: MonoBehaviour
                 heartImages[i].sprite = emptyHeartSprite;
             }
         }
+    }
+
+    public void AddScore(int amount)
+    {
+        // 現在のスコアに、引数で受け取った点数を加算する
+        score += amount;
+
+        // UIの表示も忘れずに更新する
+        scoreText.text = "Score: " + score;
     }
 }

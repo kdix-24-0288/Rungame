@@ -64,10 +64,20 @@ public class StageGenerator : MonoBehaviour
 
     void SpawnStage()
     {
-        // リストが空でないことを確認
-        if (stagePrefabs.Count == 0) return;
+        if (stagePrefabs.Count <= 1)
+        {
+            // もしステージが1つしかないなら、それを生成し続けるしかない
+            if (stagePrefabs.Count == 1)
+            {
+                SpawnStage(stagePrefabs[0]);
+            }
+            // リストが空なら何もしない
+            return;
+        }
 
-        int randomIndex = Random.Range(0, stagePrefabs.Count);
+        // ランダムに選ぶ範囲を、リストの2番目（インデックス1）から最後までにする
+        int randomIndex = Random.Range(1, stagePrefabs.Count);
+
         // 下のSpawnStageメソッドに、選んだプレハブを渡してあげる
         SpawnStage(stagePrefabs[randomIndex]);
     }
