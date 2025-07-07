@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class PlayerController : MonoBehaviour
 {
@@ -28,6 +29,11 @@ public class PlayerController : MonoBehaviour
     public float wallCheckDistance = 0.5f;  // 壁を検知する線の長さ
     private bool isTouchingWall;            // 壁に触れているかどうかの状態
 
+    [Header("無敵時間設定")]
+    public float invincibilityDuration = 1.5f; // 無敵時間（秒）
+    private bool isInvincible = false;       // 現在無敵かどうかの状態
+    private SpriteRenderer spriteRenderer;   // 点滅させるためのスプライトレンダラー
+
     private Rigidbody2D rb;
     private Animator animator;
     private bool isGrounded = false;
@@ -37,6 +43,7 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
         FindObjectOfType<GameManager>().UpdateHealthUI(health);
     }
 
@@ -136,17 +143,24 @@ public class PlayerController : MonoBehaviour
 
         if (other.CompareTag("Enemy"))
         {
-            // ダメージ処理
-            health--;
-            FindObjectOfType<GameManager>().UpdateHealthUI(health);
-
-            Debug.Log("敵に当たった！ 残りライフ: " + health);
-            if (health <= 0)
+            // ▼▼▼ このif文で、ダメージ処理全体を囲む ▼▼▼
+            if (!isInvincible) // もし、無敵状態じゃなければ
             {
-                GameOver();
+                health--;
+                FindObjectOfType<GameManager>().UpdateHealthUI(health);
+                other.gameObject.SetActive(false);
+
+                if (health <= 0)
+                {
+                    GameOver();
+                }
+                else
+                {
+                    // ★★★ ダメージを受けたら、無敵コルーチンを開始する ★★★
+                    StartCoroutine(InvincibilityCoroutine());
+                }
             }
         }
-
         if (other.CompareTag("Coin"))
         {
             // GameManagerにスコアを増やすようにお願いする
@@ -165,4 +179,34 @@ public class PlayerController : MonoBehaviour
             this.enabled = false;
             FindObjectOfType<GameManager>().ShowGameOverUI();
         }
+
+    // 無敵時間と点滅を管理するコルーチン
+    private IEnumerator InvincibilityCoroutine()
+    {
+        // 1. 無敵状態を開始
+        isInvincible = true;
+
+        float blinkInterval = 0.2f; // 点滅の間隔（0.2秒ごとに表示・非表示を切り替え）
+        float invincibleTimer = 0f;   // 無敵時間のタイマー
+
+        // 2. 無敵時間が終わるまで、ループし続ける
+        while (invincibleTimer < invincibilityDuration)
+        {
+            // キャラクターの表示・非表示を切り替える
+            spriteRenderer.enabled = !spriteRenderer.enabled;
+
+            // 点滅の間隔だけ処理を待つ
+            yield return new WaitForSeconds(blinkInterval);
+
+            // タイマーを加算
+            invincibleTimer += blinkInterval;
+        }
+
+        // 3. 無敵状態を終了
+        // 念のため、最後は必ず表示状態に戻す
+        spriteRenderer.enabled = true;
+        isInvincible = false;
     }
+
+} // ← クラスの最後の閉じ括弧
+ 
