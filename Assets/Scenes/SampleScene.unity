@@ -1170,7 +1170,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   groundCheckPoint: {fileID: 289525539}
-  groundCheckDistance: 0.2
+  groundCheckDistance: 0.4
   wallLayer:
     serializedVersion: 2
     m_Bits: 8
@@ -1657,6 +1657,7 @@ MonoBehaviour:
   stagePrefabs:
   - {fileID: 8155684562970663650, guid: 95a2cce9fe4f349738ecea5222049442, type: 3}
   - {fileID: 8155684562970663650, guid: 8798a839361754ad19131ed414bd9343, type: 3}
+  - {fileID: 8155684562970663650, guid: 4f3b11712595d4c95a953046334e768a, type: 3}
   enemyPrefab: {fileID: 7928155016916911459, guid: 45c513b8147d0437e95a854f4cfea5f7, type: 3}
   enemyChancePerSpawnPoint: 25
   player: {fileID: 1283493619}
