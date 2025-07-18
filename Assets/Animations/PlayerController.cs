@@ -20,14 +20,18 @@ public class PlayerController : MonoBehaviour
 
     [Header("接地判定（Raycast用）")]
     public LayerMask groundLayer;           // Inspectorで設定する地面のレイヤー
-    public Transform groundCheckPoint;      // Inspectorで設定する地面判定の開始位置
+    public Transform groundCheckPoint;      // Inspectorで設定する地面判定の基準点
     public float groundCheckDistance = 0.55f; // Inspectorで調整する地面判定の距離
+    public Vector2 groundCheckSize = new Vector2(0.7f, 0.25f); // 判定範囲（幅と高さ）
 
     [Header("壁判定")]
     public LayerMask wallLayer;             // 壁として認識するレイヤー
     public Transform wallCheckPoint;        // 壁を検知する線の開始位置
     public float wallCheckDistance = 0.5f;  // 壁を検知する線の長さ
     private bool isTouchingWall;            // 壁に触れているかどうかの状態
+
+    private float stuckTime = 0f; // 脱出判定に使う時間カウンタ
+    private const float STUCK_THRESHOLD = 0.1f; // 0.1秒以上ハマっていたら脱出
 
     [Header("無敵時間設定")]
     public float invincibilityDuration = 1.5f; // 無敵時間（秒）
@@ -86,19 +90,42 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         // --- 接地判定 ---
-        isGrounded = Physics2D.Raycast(groundCheckPoint.position, Vector2.down, groundCheckDistance, groundLayer);
+        //isGrounded = Physics2D.Raycast(groundCheckPoint.position, Vector2.down, groundCheckDistance, groundLayer); //Raycastでの着地判定
+        //isGrounded = Physics2D.OverlapBox(groundCheckPoint.position, groundCheckSize, 0f, groundLayer); //着地判定に地面があれば反応(うまくいかなかった)
+        Vector2 origin = groundCheckPoint.position;
+        // 下方向に BoxCast（足元チェック）
+        bool downHit = Physics2D.BoxCast(origin, groundCheckSize, 0f, Vector2.down, groundCheckDistance, groundLayer);
+        // 右方向に BoxCast（右横チェック）
+        bool rightHit = Physics2D.BoxCast(origin, groundCheckSize, 0f, Vector2.right, groundCheckDistance, groundLayer);
+        // どちらかに接触していれば接地扱いにする
+        //着地判定に、地面が右から触れても下から触れても反応する(ジャンプ不可防止)
+        isGrounded = downHit || rightHit;
 
         // --- 壁判定のRaycast ---
         isTouchingWall = Physics2D.Raycast(wallCheckPoint.position, Vector2.right, wallCheckDistance, wallLayer);
 
         // --- 角でハマった時の脱出処理 ---
         // 条件：壁に触れていて、かつ、地面にいて、かつ、水平方向の速度がほぼゼロ（＝ハマっている）
-        if (isTouchingWall && isGrounded && Mathf.Abs(rb.velocity.x) < 0.05f)
+        bool isStuck = isTouchingWall && isGrounded && Mathf.Abs(rb.velocity.x) < 0.05f;
+        if (isStuck)
         {
-            // 小さく上に押し出して、角を乗り越えさせる
-            // ここの力の値(3f)は、キャラクターに合わせて微調整してください
-            rb.AddForce(Vector2.up * 3f, ForceMode2D.Impulse);
+            stuckTime += Time.deltaTime;
+            if (stuckTime >= STUCK_THRESHOLD)
+            {
+                rb.AddForce(Vector2.up * 6f, ForceMode2D.Impulse);
+                stuckTime = 0f; // リセット
+            }
         }
+        else
+        {
+            stuckTime = 0f;
+        }
+        //if (isTouchingWall && isGrounded && Mathf.Abs(rb.velocity.x) < 0.05f)
+        //{
+        //小さく上に押し出して、角を乗り越えさせる
+        //ここの力の値(3f)は、キャラクターに合わせて微調整してください
+        //rb.AddForce(Vector2.up * 0.2f, ForceMode2D.Impulse);//変更前の脱出処理
+        //}
 
         // --- 着地時のリセット処理 ---
         if (isGrounded && rb.velocity.y <= 0)
@@ -171,14 +198,14 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-        // --- ゲームオーバー処理 ---
-        public void GameOver()
-        {
-            Debug.Log("GAME OVER");
-            Time.timeScale = 0f;
-            this.enabled = false;
-            FindObjectOfType<GameManager>().ShowGameOverUI();
-        }
+    // --- ゲームオーバー処理 ---
+    public void GameOver()
+    {
+        Debug.Log("GAME OVER");
+        Time.timeScale = 0f;
+        this.enabled = false;
+        FindObjectOfType<GameManager>().ShowGameOverUI();
+    }
 
     // 無敵時間と点滅を管理するコルーチン
     private IEnumerator InvincibilityCoroutine()
@@ -207,6 +234,14 @@ public class PlayerController : MonoBehaviour
         spriteRenderer.enabled = true;
         isInvincible = false;
     }
+    void OnDrawGizmosSelected()
+{
+    //Sceneビューでの着地判定可視化用
+    if (groundCheckPoint == null) return;
+
+    Gizmos.color = Color.green;
+    Gizmos.DrawWireCube(groundCheckPoint.position, groundCheckSize);
+}
 
 } // ← クラスの最後の閉じ括弧
  
