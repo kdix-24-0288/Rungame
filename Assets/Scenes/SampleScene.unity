@@ -1657,9 +1657,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stagePrefabs:
   - {fileID: 8155684562970663650, guid: 95a2cce9fe4f349738ecea5222049442, type: 3}
+  - {fileID: 8155684562970663650, guid: 8798a839361754ad19131ed414bd9343, type: 3}
   - {fileID: 3262723193693551836, guid: e3703df4327fb49c5b9c8d7b65f45547, type: 3}
   - {fileID: 8155684562970663650, guid: b20ebe47d2d45433ab77ccb9ff8569e7, type: 3}
-  - {fileID: 8155684562970663650, guid: 8798a839361754ad19131ed414bd9343, type: 3}
+  - {fileID: 8155684562970663650, guid: f01a43947672f4a6e9701f538ef91526, type: 3}
   enemyPrefab: {fileID: 7928155016916911459, guid: 45c513b8147d0437e95a854f4cfea5f7, type: 3}
   enemyChancePerSpawnPoint: 25
   player: {fileID: 1283493619}
