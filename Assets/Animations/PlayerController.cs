@@ -18,11 +18,17 @@ public class PlayerController : MonoBehaviour
     private float currentJumpTime;         // 現在のジャンプ時間を記録するタイマー
     private bool isJumping;
 
-    [Header("接地判定（Raycast用）")]
+    /*[Header("接地判定（Raycast用）")]
     public LayerMask groundLayer;           // Inspectorで設定する地面のレイヤー
     public Transform groundCheckPoint;      // Inspectorで設定する地面判定の基準点
     public float groundCheckDistance = 0.55f; // Inspectorで調整する地面判定の距離
-    public Vector2 groundCheckSize = new Vector2(0.7f, 0.25f); // 判定範囲（幅と高さ）
+    public Vector2 groundCheckSize = new Vector2(0.7f, 0.25f);*/ // 判定範囲（幅と高さ）
+
+    [Header("接地判定")]
+    public LayerMask groundLayer;
+    public Transform groundCheckPoint;
+    public Vector2 groundCheckSize = new Vector2(0.8f, 0.2f);
+    public float groundCheckDistance = 0.55f; // Inspectorで調整する地面判定の距離
 
     [Header("壁判定")]
     public LayerMask wallLayer;             // 壁として認識するレイヤー
@@ -32,6 +38,9 @@ public class PlayerController : MonoBehaviour
 
     private float stuckTime = 0f; // 脱出判定に使う時間カウンタ
     private const float STUCK_THRESHOLD = 0.1f; // 0.1秒以上ハマっていたら脱出
+
+    [Header("坂道設定")]
+    public float slopeForceMultiplier = 1.5f;
 
     [Header("無敵時間設定")]
     public float invincibilityDuration = 1.5f; // 無敵時間（秒）
@@ -53,21 +62,39 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (rb.velocity.x < moveSpeed)
+        Vector2 moveDirection = Vector2.right; // 移動方向の基本は、水平な右方向
+
+        // もし地面にいるなら、地面の傾きを調べて移動方向を調整する
+        if (isGrounded && !isJumping)
         {
-            // 前に進むための力を加える
-            // ForceMode2D.Forceは、質量を考慮した継続的な力です。
-            // moveSpeedに10を掛けるなどして、力の大きさを調整してください。
-            rb.AddForce(Vector2.right * moveSpeed * 10f);
+            // 足元から短いRaycastを飛ばして、地面の情報を取得
+            RaycastHit2D hit = Physics2D.Raycast(groundCheckPoint.position, Vector2.down, groundCheckDistance + 0.2f, groundLayer);
+            if (hit.collider != null)
+            {
+                // 法線ベクトル（地面の垂直な向き）から、坂道に沿った方向を計算する
+                moveDirection = new Vector2(hit.normal.y, -hit.normal.x);
+            }
         }
 
-        // もし何かの拍子で速度が速くなりすぎた場合、最高速度に制限する（安全装置）
+        // --- 力を加える処理 ---
+        // 条件：壁に触れていなくて、かつ、現在の速度が最高速未満の場合
+        if (!isTouchingWall && rb.velocity.x < moveSpeed)
+        {
+            // 計算した「移動方向」に力を加える
+            rb.AddForce(moveDirection * moveSpeed * 10f);
+        }
+
+        // もし壁に触れているなら、水平方向の速度をゼロにする
+        if (isTouchingWall)
+        {
+            rb.velocity = new Vector2(0, rb.velocity.y);
+        }
+
+        // --- 速度制限（安全装置） ---
         if (rb.velocity.x > moveSpeed)
         {
             rb.velocity = new Vector2(moveSpeed, rb.velocity.y);
         }
-
-        // ★★★ ここから追加 ★★★
         // --- ジャンプボタンを押し続けている間の、継続的な上昇処理 ---
         if (isJumping)
         {
@@ -85,30 +112,32 @@ public class PlayerController : MonoBehaviour
                 isJumping = false;
             }
         }
+        if (isGrounded && !isJumping)
+        {
+            // もし、Y軸の上昇速度が、意図しない跳ね返りとみなせるほど大きい場合
+            // (0.1fは、通常の坂道走行では超えないような、ごく僅かな値です)
+            if (rb.velocity.y > 5f)
+            {
+                // Y軸の速度をゼロにリセットして、不要な跳ね上がりを抑制する
+                Debug.Log("跳ね上がり");
+                rb.velocity = new Vector2(rb.velocity.x, 0);
+            }
+        }
     }
 
     void Update()
     {
         // --- 接地判定 ---
-        //isGrounded = Physics2D.Raycast(groundCheckPoint.position, Vector2.down, groundCheckDistance, groundLayer); //Raycastでの着地判定
-        //isGrounded = Physics2D.OverlapBox(groundCheckPoint.position, groundCheckSize, 0f, groundLayer); //着地判定に地面があれば反応(うまくいかなかった)
-        Vector2 origin = groundCheckPoint.position;
-        // 下方向に BoxCast（足元チェック）
-        bool downHit = Physics2D.BoxCast(origin, groundCheckSize, 0f, Vector2.down, groundCheckDistance, groundLayer);
-        // 右方向に BoxCast（右横チェック）
-        bool rightHit = Physics2D.BoxCast(origin, groundCheckSize, 0f, Vector2.right, groundCheckDistance, groundLayer);
-        // どちらかに接触していれば接地扱いにする
-        //着地判定に、地面が右から触れても下から触れても反応する(ジャンプ不可防止)
-        isGrounded = downHit || rightHit;
-
-        // --- 壁判定のRaycast ---
-        isTouchingWall = Physics2D.Raycast(wallCheckPoint.position, Vector2.right, wallCheckDistance, wallLayer);
+        isGrounded = Physics2D.OverlapBox(groundCheckPoint.position, groundCheckSize, 0f, groundLayer);
+        //Debug.Log("地面"+isGrounded);
+        //Debug.Log("壁"+isTouchingWall);
 
         // --- 角でハマった時の脱出処理 ---
         // 条件：壁に触れていて、かつ、地面にいて、かつ、水平方向の速度がほぼゼロ（＝ハマっている）
         bool isStuck = isTouchingWall && isGrounded && Mathf.Abs(rb.velocity.x) < 0.05f;
         if (isStuck)
         {
+            Debug.Log("はまった");
             stuckTime += Time.deltaTime;
             if (stuckTime >= STUCK_THRESHOLD)
             {
@@ -120,12 +149,12 @@ public class PlayerController : MonoBehaviour
         {
             stuckTime = 0f;
         }
-        //if (isTouchingWall && isGrounded && Mathf.Abs(rb.velocity.x) < 0.05f)
-        //{
+        if (isTouchingWall && isGrounded && Mathf.Abs(rb.velocity.x) < 0.05f)
+        {
         //小さく上に押し出して、角を乗り越えさせる
-        //ここの力の値(3f)は、キャラクターに合わせて微調整してください
-        //rb.AddForce(Vector2.up * 0.2f, ForceMode2D.Impulse);//変更前の脱出処理
-        //}
+        //ここの力の値(3f)は、キャラクターに合わせて微調整
+        rb.AddForce(Vector2.up * 0.2f, ForceMode2D.Impulse);//変更前の脱出処理
+        }
 
         // --- 着地時のリセット処理 ---
         if (isGrounded && rb.velocity.y <= 0)
@@ -183,7 +212,7 @@ public class PlayerController : MonoBehaviour
                 }
                 else
                 {
-                    // ★★★ ダメージを受けたら、無敵コルーチンを開始する ★★★
+                    //ダメージを受けたら、無敵コルーチンを開始する ★★★
                     StartCoroutine(InvincibilityCoroutine());
                 }
             }
@@ -235,13 +264,14 @@ public class PlayerController : MonoBehaviour
         isInvincible = false;
     }
     void OnDrawGizmosSelected()
-{
-    //Sceneビューでの着地判定可視化用
-    if (groundCheckPoint == null) return;
+    {
+        // Sceneビューでの着地判定範囲を、緑色の四角として可視化する
+        if (groundCheckPoint != null)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireCube(groundCheckPoint.position, groundCheckSize);
+        }
+    }
 
-    Gizmos.color = Color.green;
-    Gizmos.DrawWireCube(groundCheckPoint.position, groundCheckSize);
 }
-
-} // ← クラスの最後の閉じ括弧
  

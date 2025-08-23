@@ -1,7 +1,7 @@
 ﻿<Properties StartupConfiguration="{95ACDEB0-3F3E-ADC0-C654-EE031B4AB388}|">
   <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Animations/PlayerController.cs">
     <Files>
-      <File FileName="Assets/Animations/PlayerController.cs" Line="60" Column="6" />
+      <File FileName="Assets/Animations/PlayerController.cs" Line="102" Column="31" />
       <File FileName="Assets/Animations/CameraFollow.cs" />
       <File FileName="Assets/Animations/StageGenerator.cs" />
       <File FileName="Assets/Animations/Follower.cs" />
@@ -21,7 +21,7 @@
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.ItemProperties.Assembly-CSharp PreferredExecutionTarget="27a34923-fd0d-47b2-8f68-6715c0fdb9f6" />
+  <MonoDevelop.Ide.ItemProperties.Assembly-CSharp PreferredExecutionTarget="bc60a2f9-f2d2-473b-9b1e-f1849b800f0f" />
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
