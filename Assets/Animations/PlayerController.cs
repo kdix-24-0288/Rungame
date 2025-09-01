@@ -51,6 +51,12 @@ public class PlayerController : MonoBehaviour
     private Animator animator;
     private bool isGrounded = false;
 
+    [Header("効果音")]
+    public AudioClip jumpSound;
+    public AudioClip damageSound;
+    public AudioClip coinSound;
+    private AudioSource audioSource;
+
 
     void Start()
     {
@@ -58,6 +64,7 @@ public class PlayerController : MonoBehaviour
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         FindObjectOfType<GameManager>().UpdateHealthUI(health);
+        audioSource = GetComponent<AudioSource>();
     }
 
     void FixedUpdate()
@@ -169,7 +176,11 @@ public class PlayerController : MonoBehaviour
         {
             // Y軸の速度をリセットして、毎回同じ高さでジャンプできるようにする
             rb.velocity = new Vector2(rb.velocity.x, 0);
-            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse); // 最初のひと蹴り
+            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+            if (audioSource != null && jumpSound != null)//ジャンプ音を出す処理
+            {
+                audioSource.PlayOneShot(jumpSound);
+            }
 
             currentJumpCount++; // ジャンプ回数をカウント
             isJumping = true;     // ジャンプボタンが押されている状態にする
@@ -202,6 +213,10 @@ public class PlayerController : MonoBehaviour
             // ▼▼▼ このif文で、ダメージ処理全体を囲む ▼▼▼
             if (!isInvincible) // もし、無敵状態じゃなければ
             {
+                if (audioSource != null && damageSound != null)
+                {
+                    audioSource.PlayOneShot(damageSound);
+                }
                 health--;
                 FindObjectOfType<GameManager>().UpdateHealthUI(health);
                 other.gameObject.SetActive(false);
@@ -219,6 +234,11 @@ public class PlayerController : MonoBehaviour
         }
         if (other.CompareTag("Coin"))
         {
+            // audioSourceがnullでないことを確認してから再生（安全策）
+            if (audioSource != null && coinSound != null)
+            {
+                audioSource.PlayOneShot(coinSound);
+            }
             // GameManagerにスコアを増やすようにお願いする
             FindObjectOfType<GameManager>().AddScore(100); // 1枚あたり100点加算
 
